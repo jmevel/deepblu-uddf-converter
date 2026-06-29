@@ -15,13 +15,15 @@ class WayPoint:
         # A quirk of Deepblu is that, for some logs, it saves the dive time of waypoints
         # in Unix epoch time. This is why we keep track of the first waypoint time
         # and subtract it later from each following waypoint's time
+        raw_time = way_point.get("time")
         if root._start_epoch is None:
-            root._start_epoch = way_point.get("time") if way_point.get("time") else 0
-        # For some logs, Deepblu does not save time correctly, however Deepblu
-        # always keeps a waypoint every 20 seconds. So if no time is set, add 20 s
-        parent.time = (
-            way_point.get("time") if way_point.get("time") else parent.time + 20
-        )
+            root._start_epoch = raw_time if raw_time is not None else 0
+        if raw_time is not None:
+            parent.time = raw_time
+        else:
+            # If no time is set, use the sample interval (default 20 s)
+            interval = root.dive_sample_interval if root.dive_sample_interval else 20
+            parent.time = parent.time + interval
         parent.time -= root._start_epoch  # subtract 0 or unix time from each waypoint
 
         self.depth = depth
